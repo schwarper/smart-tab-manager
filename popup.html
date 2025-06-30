@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Tab Manager</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="title-area">
+                <img src="icons/icon48.png" alt="logo" class="header-logo">
+                <h1 data-i18n="extName"></h1>
+            </div>
+            <button id="toggleExtensionBtn" class="toggle-button" data-i18n-loading="toggleButtonLoading"></button>
+        </header>
+
+        <section id="snooze-section">
+            <div id="snoozeControls" class="snooze-container">
+                <select id="snoozeDuration">
+                    <option value="900000" data-i18n="snoozeFor15Minutes"></option>
+                    <option value="1800000" data-i18n="snoozeFor30Minutes"></option>
+                    <option value="3600000" selected data-i18n="snoozeFor1Hour"></option>
+                    <option value="10800000" data-i18n="snoozeFor3Hours"></option>
+                </select>
+                <button id="snoozeBtn" data-i18n="snoozeStartButton"></button>
+            </div>
+            <button id="cancelSnoozeBtn" class="warn-button full-width" style="display: none;" data-i18n="cancelSnoozeButton"></button>
+        </section>
+
+        <section class="section-break-after">
+            <h2 data-i18n="quickActionsHeader"></h2>
+            <div class="quick-actions-grid">
+                <button id="suspendCurrentTab" data-i18n="suspendCurrentTabBtn"></button>
+                <button id="suspendOtherTabs" data-i18n="suspendOtherTabsBtn"></button>
+                <button id="suspendAllWindows" class="warn-button full-width" data-i18n="suspendAllWindowsBtn"></button>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-header">
+                <h2 data-i18n="suspendedTabsHeader"></h2>
+                <span id="suspendedCount" class="chip">0</span>
+            </div>
+            <div class="list-container" id="suspendedTabsListContainer">
+                <ul id="suspendedTabsList"></ul>
+            </div>
+            <div class="bulk-actions" id="bulkActionsContainer" style="display: none;">
+                <button id="wakeAllTabs" data-i18n="wakeAllBtn"></button>
+                <button id="closeAllTabs" class="warn-button" data-i18n="closeAllBtn"></button>
+            </div>
+        </section>
+
+        <section class="section-break-after">
+            <h2 data-i18n="exclusionListHeader"></h2>
+            <button id="addCurrentTabToExclusion" class="full-width" data-i18n="addCurrentSiteToExclusionBtn"></button>
+            <div class="list-container" id="exclusionListContainer">
+                <ul id="exclusionList"></ul>
+            </div>
+        </section>
+
+        <section class="collapsible">
+            <h2 class="collapsible-header" data-i18n="settingsHeader"></h2>
+            <div class="collapsible-content">
+                <div class="setting-item">
+                    <label for="inactiveThresholdMinutes" data-i18n="suspendThresholdLabel" data-i18n-title="suspendThresholdTitle"></label>
+                    <input type="number" id="inactiveThresholdMinutes" min="1">
+                </div>
+                <div class="setting-item">
+                    <label for="suspendedTitlePrefix" data-i18n="tabTitlePrefixLabel" data-i18n-title="tabTitlePrefixTitle"></label>
+                    <input type="text" id="suspendedTitlePrefix" placeholder="😴">
+                </div>
+                <div class="setting-item">
+                    <label for="ignorePinned" data-i18n="ignorePinnedLabel" data-i18n-title="ignorePinnedTitle"></label>
+                    <input type="checkbox" id="ignorePinned">
+                </div>
+                <div class="setting-item">
+                    <label for="ignoreAudio" data-i18n="ignoreAudioLabel" data-i18n-title="ignoreAudioTitle"></label>
+                    <input type="checkbox" id="ignoreAudio">
+                </div>
+                <div class="setting-item">
+                    <label for="ignoreForms" data-i18n="ignoreFormsLabel" data-i18n-title="ignoreFormsTitle"></label>
+                    <input type="checkbox" id="ignoreForms">
+                </div>
+                <div class="setting-item">
+                    <label for="groupTabsAutomatically" data-i18n="groupTabsAutomaticallyLabel" data-i18n-title="groupTabsAutomaticallyTitle"></label>
+                    <input type="checkbox" id="groupTabsAutomatically">
+                </div>
+                <div id="groupingOptions" class="grouping-options">
+                    <div class="setting-item"><label for="groupName" data-i18n="groupNameLabel"></label><input type="text" id="groupName"></div>
+                    <div class="setting-item"><label for="groupColor" data-i18n="groupColorLabel"></label><select id="groupColor">
+                        <option value="grey" data-i18n="colorGrey"></option>
+                        <option value="blue" data-i18n="colorBlue"></option>
+                        <option value="red" data-i18n="colorRed"></option>
+                        <option value="yellow" data-i18n="colorYellow"></option>
+                        <option value="green" data-i18n="colorGreen"></option>
+                        <option value="pink" data-i18n="colorPink"></option>
+                        <option value="purple" data-i18n="colorPurple"></option>
+                        <option value="cyan" data-i18n="colorCyan"></option>
+                    </select></div>
+                </div>
+                <div class="setting-item">
+                    <label for="showNotifications" data-i18n="showManualNotificationsLabel" data-i18n-title="showManualNotificationsTitle"></label>
+                    <input type="checkbox" id="showNotifications">
+                </div>
+                 <div class="setting-item">
+                    <label for="showAutoSuspendNotifications" data-i18n="showAutoNotificationsLabel" data-i18n-title="showAutoNotificationsTitle"></label>
+                    <input type="checkbox" id="showAutoSuspendNotifications">
+                </div>
+            </div>
+        </section>
+
+        <section class="footer-section">
+             <div class="footer-grid">
+                <button id="supportBtn">Support</button>
+                <a id="donateBtn" href="https://www.buymeacoffee.com/schwarper" target="_blank" rel="noopener noreferrer">Donate</a>
+            </div>
+        </section>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

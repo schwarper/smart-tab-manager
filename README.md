@@ -30,8 +30,7 @@ In a typical Browse session, it's easy to accumulate dozens of open tabs. Each t
 ## 🚀 Installation
 
 #### 1. Install from the Chrome Web Store (Recommended)
-...
-
+[Smart Tab Manager - Chrome Web Store](https://chromewebstore.google.com/detail/smart-tab-manager/dcnghodhfiinlgdhidhifjmifmmlanep)
 
 #### 2. Install from Source (For Developers)
 

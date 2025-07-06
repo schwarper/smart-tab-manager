@@ -48,7 +48,7 @@ Our extension is packed with powerful features to make your Browse experience mo
 ## 🚀 Installation
 
 #### 1. Install from the Chrome Web Store (Recommended)
-[Smart Tab Manager - Chrome Web Store](https://chromewebstore.google.com/detail/ak%C4%B1ll%C4%B1-sekme-y%C3%B6neticisi/dcnghodhfiinlgdhidhifjmifmmlanep)
+[Smart Tab Manager - Chrome Web Store](https://chromewebstore.google.com/detail/smart-tab-manager/dcnghodhfiinlgdhidhifjmifmmlanep)
 
 #### 2. Install from Source (For Developers)
 

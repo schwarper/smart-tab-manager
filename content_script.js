@@ -1,9 +1,14 @@
 let formInputDetected = false;
-const detectFormInput = () => {
+
+const detectFormInteraction = (event) => {
     if (formInputDetected) return;
-    formInputDetected = true;
-    try {
-        chrome.runtime.sendMessage({ type: "FORM_INPUT_DETECTED" });
-    } catch (e) { }
+    if (event.target.matches('input, textarea, [contenteditable="true"]')) {
+        formInputDetected = true;
+        try {
+            chrome.runtime.sendMessage({ type: "FORM_INPUT_DETECTED" });
+        } catch (e) {}
+    }
 };
-window.addEventListener('input', detectFormInput, { once: true, capture: true });
+
+window.addEventListener('focusin', detectFormInteraction, { capture: true });
+window.addEventListener('input', detectFormInteraction, { once: true, capture: true });

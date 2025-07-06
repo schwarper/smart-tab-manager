@@ -1,373 +1,299 @@
-if (typeof browser === 'undefined') {
-    var browser = chrome;
-}
+if (typeof browser === 'undefined') { var browser = chrome; }
 
 const DEFAULT_SETTINGS = {
     extensionEnabled: true,
     inactiveThresholdMinutes: 15,
     suspendedTitlePrefix: '😴',
-    showNotifications: true,
-    showAutoSuspendNotifications: true,
-    groupTabsAutomatically: true,
-    groupName: 'Suspended',
-    groupColor: 'blue',
     ignorePinned: true,
     ignoreAudio: true,
     ignoreForms: true,
-    snoozeUntil: 0
+    snoozeUntil: 0,
+    smartGroups: [],
+    exclusionList: [],
+    theme: 'system',
+    autoGroupNewTabs: true
 };
 
-const ALARMS = {
-    CHECK_INACTIVE: 'checkInactiveTabsAlarm',
-    GROUP_AUDIT: 'groupAuditAlarm'
-};
+const ALARMS = { CHECK_INACTIVE: 'checkInactiveTabsAlarm' };
+const SESSION_KEYS = { ACCESS: 'tabAccessTimes', FORMS: 'formInputTabs' };
 
-const SESSION_KEYS = {
-    ACCESS: 'tabAccessTimes',
-    FORMS: 'formInputTabs'
-};
+async function getSettings() { return await browser.storage.sync.get(DEFAULT_SETTINGS); }
+const cleanHostname = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return null; } };
 
-async function checkAndUngroupIfAwakened(tabId) {
+async function handleTabAwakening(tabId) {
     try {
         const tab = await browser.tabs.get(tabId);
-        if (tab && !tab.discarded && tab.groupId !== -1) {
-            const { groupName } = await browser.storage.sync.get(DEFAULT_SETTINGS);
-            const group = await browser.tabGroups.get(tab.groupId);
-            
-            if (group && group.title === groupName) {
-                await browser.tabs.ungroup([tabId]);
-            }
+        if (tab && tab.groupId !== -1) {
+            await browser.tabs.ungroup([tabId]);
         }
     } catch (e) {}
 }
 
-async function suspendTab(tab, suppressNotification = false) {
+async function suspendTab(tab, options = {}) {
+    const { force = false } = options;
     if (!tab || !tab.id || !tab.url || !tab.url.startsWith("http") || tab.discarded) return false;
     
-    const settings = await browser.storage.sync.get(DEFAULT_SETTINGS);
+    const settings = await getSettings();
     if (!settings.extensionEnabled) return false;
 
-    const exclusionList = (await browser.storage.sync.get({exclusionList: []})).exclusionList;
-    try {
-        if (exclusionList.includes(new URL(tab.url).hostname)) return false;
-    } catch (e) { return false; }
+    const hostname = cleanHostname(tab.url);
+    if (!hostname || (settings.exclusionList || []).includes(hostname)) return false;
+    if (settings.ignorePinned && tab.pinned) return false;
 
-    if ((settings.ignorePinned && tab.pinned) || (settings.ignoreAudio && tab.audible)) return false;
-    
-    if (settings.ignoreForms) {
-        const formInputTabs = (await browser.storage.session.get(SESSION_KEYS.FORMS))[SESSION_KEYS.FORMS] || [];
-        if (formInputTabs.includes(tab.id)) return false;
+    if (!force) {
+        if (settings.ignoreAudio && tab.audible) return false;
+        if (settings.ignoreForms) {
+            const formTabs = (await browser.storage.session.get(SESSION_KEYS.FORMS))[SESSION_KEYS.FORMS] || [];
+            if (formTabs.includes(tab.id)) return false;
+        }
     }
 
     try {
-        if (settings.groupTabsAutomatically) {
-            await autoGroupTab(tab.id, tab.windowId);
-        }
-
         if (settings.suspendedTitlePrefix) {
             await browser.scripting.executeScript({
                 target: { tabId: tab.id },
-                func: (prefix) => { if(!document.title.startsWith(prefix)) { document.title = `${prefix} ${document.title}`; } },
+                func: (prefix) => { if (!document.title.startsWith(prefix)) { document.title = `${prefix} ${document.title}`; } },
                 args: [settings.suspendedTitlePrefix],
             }).catch(() => {});
         }
         
         await browser.tabs.discard(tab.id);
-
-        if (settings.showNotifications && !suppressNotification) {
-            browser.notifications.create({
-                type: 'basic',
-                iconUrl: 'icons/icon48.png',
-                title: browser.i18n.getMessage("notificationTitleTabSuspended"),
-                message: browser.i18n.getMessage("notificationMessageTabSuspended", tab.title)
-            });
-        }
-        await updateAll();
+        await updateAllUi();
         return true;
-    } catch (error) {
-        return false;
-    }
+    } catch (error) { return false; }
 }
 
 async function checkInactiveTabs() {
-    const settings = await browser.storage.sync.get(DEFAULT_SETTINGS);
+    const settings = await getSettings();
     if (!settings.extensionEnabled || Date.now() < settings.snoozeUntil) return;
-
-    const queryOptions = {
-        active: false,
-        discarded: false,
-        url: ["http://*/*", "https://*/*"]
-    };
-
-    if (settings.ignoreAudio) {
-        queryOptions.audible = false;
-    }
-    if (settings.ignorePinned) {
-        queryOptions.pinned = false;
-    }
-
+    const queryOptions = { active: false, discarded: false, url: ["http://*/*", "https://*/*"] };
+    if (settings.ignorePinned) queryOptions.pinned = false;
     const tabs = await browser.tabs.query(queryOptions);
     const thresholdMillis = settings.inactiveThresholdMinutes * 60 * 1000;
-    const tabsToSuspend = [];
-    
+    const accessTimes = (await browser.storage.session.get(SESSION_KEYS.ACCESS))[SESSION_KEYS.ACCESS] || {};
     for (const tab of tabs) {
-        const lastAccessed = (await browser.storage.session.get(SESSION_KEYS.ACCESS))[SESSION_KEYS.ACCESS]?.[tab.id] || tab.lastAccessed;
-        if (Date.now() - lastAccessed >= thresholdMillis) {
-            tabsToSuspend.push(tab);
-        }
-    }
-
-    if (tabsToSuspend.length > 0) {
-        let suspendedCount = 0;
-        let suspendedTitles = [];
-        for (const tab of tabsToSuspend) {
-            const success = await suspendTab(tab, true);
-            if (success) {
-                suspendedCount++;
-                suspendedTitles.push(tab.title);
-            }
-        }
-
-        if (suspendedCount > 0 && settings.showAutoSuspendNotifications) {
-            const titles = suspendedTitles.slice(0, 3).join(', ');
-            const message = browser.i18n.getMessage("notificationMessageAutoSuspend", [String(suspendedCount), titles]);
-            browser.notifications.create({
-                type: 'basic',
-                iconUrl: 'icons/icon48.png',
-                title: browser.i18n.getMessage("notificationTitleAutoSuspend"),
-                message: message
-            });
-        }
+        const lastAccessed = accessTimes?.[tab.id] ?? tab.lastAccessed;
+        if ((Date.now() - lastAccessed) >= thresholdMillis) await suspendTab(tab);
     }
 }
 
-async function auditSuspendedGroups() {
-    const { groupTabsAutomatically, groupName } = await browser.storage.sync.get(DEFAULT_SETTINGS);
-    if (!groupTabsAutomatically) return;
-
-    try {
-        const suspendedGroups = await browser.tabGroups.query({ title: groupName });
-        for (const group of suspendedGroups) {
-            const tabsInGroup = await browser.tabs.query({ groupId: group.id });
-            const awakenedTabs = tabsInGroup.filter(t => !t.discarded);
-            if (awakenedTabs.length > 0) {
-                const tabIdsToUngroup = awakenedTabs.map(t => t.id);
-                await browser.tabs.ungroup(tabIdsToUngroup);
-            }
-        }
-    } catch (error) {}
-}
-
-async function autoGroupTab(tabId, windowId) {
-    const { groupName, groupColor } = await browser.storage.sync.get(DEFAULT_SETTINGS);
+async function autoGroupTab(tabId, windowId, groupTitle, groupColor) {
     try {
         const tab = await browser.tabs.get(tabId);
-        if (tab && tab.groupId !== -1) return;
-
-        const existingGroups = await browser.tabGroups.query({ windowId, title: groupName });
-        let targetGroupId = existingGroups.length > 0 ? existingGroups[0].id : null;
-        if (!targetGroupId) {
-            const newGroupId = await browser.tabs.group({ tabIds: [tabId], createProperties: { windowId } });
-            await browser.tabGroups.update(newGroupId, { title: groupName, color: groupColor });
+        if (tab && tab.groupId !== -1) {
+            const currentGroup = await browser.tabGroups.get(tab.groupId);
+            if (currentGroup.title === groupTitle) return; 
+        }
+        
+        const existingGroups = await browser.tabGroups.query({ windowId, title: groupTitle });
+        if (existingGroups.length > 0) {
+            await browser.tabs.group({ groupId: existingGroups[0].id, tabIds: [tabId] });
         } else {
-            await browser.tabs.group({ groupId: targetGroupId, tabIds: [tabId] });
+            const newGroupId = await browser.tabs.group({ tabIds: [tabId], createProperties: { windowId } });
+            await browser.tabGroups.update(newGroupId, { title: groupTitle, color: groupColor, collapsed: false });
         }
     } catch (error) {}
 }
 
-async function updateAll() {
-    const suspendedTabs = await browser.tabs.query({ discarded: true });
-    await browser.action.setBadgeText({ text: suspendedTabs.length > 0 ? suspendedTabs.length.toString() : '' });
-    await browser.action.setBadgeBackgroundColor({ color: '#2e7d32' });
+async function updateAllUi() {
     try {
         await browser.runtime.sendMessage({ type: "UPDATE_UI" });
     } catch (e) {}
 }
 
 async function setAlarms() {
-    await browser.alarms.clearAll();
-    const { extensionEnabled, snoozeUntil } = await browser.storage.sync.get(DEFAULT_SETTINGS);
+    await browser.alarms.clear(ALARMS.CHECK_INACTIVE);
+    const { extensionEnabled, snoozeUntil } = await getSettings();
     if (extensionEnabled && Date.now() >= snoozeUntil) {
         browser.alarms.create(ALARMS.CHECK_INACTIVE, { periodInMinutes: 1 });
-        browser.alarms.create(ALARMS.GROUP_AUDIT, { periodInMinutes: 1 });
+    }
+}
+
+async function updateContextMenus() {
+    await browser.contextMenus.removeAll();
+
+    browser.contextMenus.create({ id: "suspend_this_tab", title: browser.i18n.getMessage("contextMenuSuspendThisTab"), contexts: ["page"] });
+    browser.contextMenus.create({ id: "toggle_exclusion", title: browser.i18n.getMessage("contextMenuToggleExclusion"), contexts: ["page"] });
+    browser.contextMenus.create({ id: "separator1", type: "separator", contexts: ["page"] });
+    browser.contextMenus.create({ id: "suspend_other_tabs", title: browser.i18n.getMessage("contextMenuSuspendOtherTabs"), contexts: ["page"] });
+
+    const { smartGroups } = await getSettings();
+    if (smartGroups && smartGroups.length > 0) {
+        browser.contextMenus.create({ id: "separator2", type: "separator", contexts: ["page"] });
+        const parentId = browser.contextMenus.create({
+            id: "add_to_smart_group",
+            title: browser.i18n.getMessage("contextMenuAddToSmartGroup"),
+            contexts: ["page"],
+        });
+        smartGroups.forEach(group => {
+            browser.contextMenus.create({
+                id: `add_to_group_${group.id}`,
+                parentId: parentId,
+                title: group.name,
+                contexts: ["page"],
+            });
+        });
+    }
+}
+
+async function handleSmartGroupAction(action, payload) {
+    const { smartGroups } = await getSettings();
+    let newGroups = [...smartGroups];
+    switch(action) {
+        case 'CREATE': newGroups.push({ id: Date.now(), ...payload }); break;
+        case 'EDIT': newGroups = newGroups.map(g => g.id === payload.id ? { ...g, ...payload } : g); break;
+        case 'DELETE': newGroups = newGroups.filter(g => g.id !== payload.id); break;
+    }
+    await browser.storage.sync.set({ smartGroups: newGroups });
+    await updateContextMenus();
+}
+
+async function openSmartGroup(groupId) {
+    const { smartGroups } = await getSettings();
+    const groupToOpen = smartGroups.find(g => g.id === groupId);
+    if (!groupToOpen || groupToOpen.domains.length === 0) return;
+    
+    const [currentWindow] = await browser.windows.getAll({ populate: true, windowTypes: ['normal'] });
+    const existingGroups = await browser.tabGroups.query({ windowId: currentWindow.id, title: groupToOpen.name });
+    
+    let targetGroupId;
+    if (existingGroups.length > 0) {
+        targetGroupId = existingGroups[0].id;
+    } else {
+        const firstTab = await browser.tabs.create({ url: `https://${groupToOpen.domains[0]}`, active: false });
+        targetGroupId = await browser.tabs.group({ tabIds: [firstTab.id], createProperties: { windowId: currentWindow.id } });
+        await browser.tabGroups.update(targetGroupId, { title: groupToOpen.name, color: groupToOpen.color, collapsed: false });
+    }
+
+    const tabsToCreate = existingGroups.length > 0 ? groupToOpen.domains : groupToOpen.domains.slice(1);
+    for (const domain of tabsToCreate) {
+        const newTab = await browser.tabs.create({ url: `https://${domain}`, active: false });
+        await browser.tabs.group({ groupId: targetGroupId, tabIds: [newTab.id] });
+    }
+}
+
+async function handleExclusion(action, domain) {
+    let { exclusionList } = await getSettings();
+    const cleanDomain = domain.replace(/^www\./, '').split('/')[0];
+
+    if (action === 'ADD' && !exclusionList.includes(cleanDomain)) {
+        exclusionList.push(cleanDomain);
+    } else if (action === 'REMOVE') {
+        exclusionList = exclusionList.filter(d => d !== domain && d !== cleanDomain);
+    }
+    await browser.storage.sync.set({ exclusionList });
+}
+
+async function handleTabUpdateForAutoGrouping(tabId, changeInfo, tab) {
+    if (changeInfo.status === 'complete' && tab.url) {
+        const settings = await getSettings();
+        if (settings.autoGroupNewTabs) {
+            const hostname = cleanHostname(tab.url);
+            if (!hostname) return;
+            const smartGroup = (settings.smartGroups || []).find(g => g.domains.some(d => hostname.includes(d)));
+            if (smartGroup) {
+                await autoGroupTab(tab.id, tab.windowId, smartGroup.name, smartGroup.color);
+            }
+        }
     }
 }
 
 browser.runtime.onInstalled.addListener(async (details) => {
-    if (details.reason === 'install') {
-      await browser.storage.sync.set(DEFAULT_SETTINGS);
-    }
+    if (details.reason === 'install') await browser.storage.sync.set(DEFAULT_SETTINGS);
     await setAlarms();
-    
-    browser.contextMenus.create({ id: "suspend_this_tab", title: browser.i18n.getMessage("contextMenuSuspendThisTab"), contexts: ["page"] });
-    browser.contextMenus.create({ id: "suspend_other_tabs", title: browser.i18n.getMessage("contextMenuSuspendOtherTabs"), contexts: ["page"] });
-    browser.contextMenus.create({ id: "toggle_exclusion", title: browser.i18n.getMessage("contextMenuExcludeSite"), contexts: ["page"] });
+    await updateContextMenus();
 });
 
-browser.runtime.onStartup.addListener(setAlarms);
-
-browser.alarms.onAlarm.addListener(alarm => {
-    if (alarm.name === ALARMS.CHECK_INACTIVE) {
-        checkInactiveTabs();
-    } else if (alarm.name === ALARMS.GROUP_AUDIT) {
-        auditSuspendedGroups();
-    }
+browser.runtime.onStartup.addListener(async () => {
+    await setAlarms();
+    await updateContextMenus();
 });
 
-browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-    if (changeInfo.discarded === false || (changeInfo.status === 'complete' && !tab.discarded)) {
-        await checkAndUngroupIfAwakened(tabId);
-    }
-
-    if (changeInfo.discarded === false) {
-        const accessTimes = (await browser.storage.session.get(SESSION_KEYS.ACCESS))[SESSION_KEYS.ACCESS] || {};
-        accessTimes[tabId] = Date.now();
-        await browser.storage.session.set({ [SESSION_KEYS.ACCESS]: accessTimes });
-    }
-    
-    if (changeInfo.status || changeInfo.discarded !== undefined || changeInfo.audible !== undefined || changeInfo.pinned !== undefined) {
-        await updateAll();
-    }
-    
-    if (tab.active && (changeInfo.url || changeInfo.status === 'complete')) {
-        await updateContextMenuForTab(tab);
-    }
-});
-
-browser.tabs.onActivated.addListener(async (activeInfo) => {
-    await checkAndUngroupIfAwakened(activeInfo.tabId);
-
-    const accessTimes = (await browser.storage.session.get(SESSION_KEYS.ACCESS))[SESSION_KEYS.ACCESS] || {};
-    accessTimes[activeInfo.tabId] = Date.now();
-    await browser.storage.session.set({ [SESSION_KEYS.ACCESS]: accessTimes });
-
-    const tab = await browser.tabs.get(activeInfo.tabId).catch(() => null);
-    if (tab) await updateContextMenuForTab(tab);
-    await updateAll();
-});
-
-
-async function updateContextMenuForTab(tab) {
-    if (!tab || !tab.url || !tab.url.startsWith('http')) {
-        browser.contextMenus.update("toggle_exclusion", { enabled: false });
-        return;
-    };
-    browser.contextMenus.update("toggle_exclusion", { enabled: true });
-    const { exclusionList } = await browser.storage.sync.get({exclusionList: []});
-    const isExcluded = exclusionList.includes(new URL(tab.url).hostname);
-    browser.contextMenus.update("toggle_exclusion", {
-        title: isExcluded ? browser.i18n.getMessage("contextMenuUnexcludeSite") : browser.i18n.getMessage("contextMenuExcludeSite")
-    });
-}
-
-browser.tabs.onRemoved.addListener(updateAll);
-browser.tabGroups.onUpdated.addListener(updateAll);
-browser.tabGroups.onRemoved.addListener(updateAll);
+browser.alarms.onAlarm.addListener(alarm => { if (alarm.name === ALARMS.CHECK_INACTIVE) checkInactiveTabs(); });
+browser.tabs.onUpdated.addListener(handleTabUpdateForAutoGrouping);
+browser.tabs.onUpdated.addListener((tabId, changeInfo) => { if (changeInfo.discarded === false) handleTabAwakening(tabId); });
+browser.tabs.onActivated.addListener(activeInfo => handleTabAwakening(activeInfo.tabId));
+[browser.tabs.onRemoved, browser.tabGroups.onUpdated, browser.tabGroups.onRemoved].forEach(event => event.addListener(updateAllUi));
 
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId === "suspend_this_tab") await suspendTab(tab);
-    else if (info.menuItemId === "suspend_other_tabs") {
-        const otherTabs = await browser.tabs.query({ windowId: tab.windowId, active: false });
-        for (const t of otherTabs) await suspendTab(t);
+    const domain = cleanHostname(tab.url);
+    if (!domain && !info.menuItemId.startsWith("suspend")) return;
+
+    if (info.menuItemId === "suspend_this_tab") {
+        await suspendTab(tab, { force: true });
     } else if (info.menuItemId === "toggle_exclusion") {
-        const url = new URL(tab.url);
-        let { exclusionList } = await browser.storage.sync.get({exclusionList: []});
-        if (exclusionList.includes(url.hostname)) {
-            exclusionList = exclusionList.filter(h => h !== url.hostname);
-        } else {
-            exclusionList.push(url.hostname);
-        }
-        await browser.storage.sync.set({ exclusionList });
-        await updateContextMenuForTab(tab);
+        const { exclusionList } = await getSettings();
+        await handleExclusion(exclusionList.includes(domain) ? 'REMOVE' : 'ADD', domain);
+    } else if (info.menuItemId === "suspend_other_tabs") {
+        const otherTabs = await browser.tabs.query({ windowId: tab.windowId, active: false });
+        for (const t of otherTabs) await suspendTab(t, { force: true });
+    } else if (info.menuItemId.startsWith("add_to_group_")) {
+        const groupId = parseInt(info.menuItemId.replace("add_to_group_", ""));
+        const { smartGroups } = await getSettings();
+        const newGroups = smartGroups.map(g => {
+            if (g.id === groupId && !g.domains.includes(domain)) {
+                return { ...g, domains: [...g.domains, domain] };
+            }
+            return g;
+        });
+        await browser.storage.sync.set({ smartGroups: newGroups });
+        await updateAllUi();
     }
 });
 
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    (async () => {
-        switch (message.type) {
-            case "GET_DATA":
-                const [settings, suspendedTabs, exclusionData] = await Promise.all([
-                    browser.storage.sync.get(DEFAULT_SETTINGS),
-                    browser.tabs.query({ discarded: true }),
-                    browser.storage.sync.get({exclusionList: []})
-                ]);
-                sendResponse({
-                    settings: settings,
-                    suspendedTabs: suspendedTabs,
-                    exclusionList: exclusionData.exclusionList
-                });
-                break;
-            case "SAVE_SETTING":
-                await browser.storage.sync.set(message.setting);
-                if (message.setting.hasOwnProperty('extensionEnabled') || message.setting.hasOwnProperty('inactiveThresholdMinutes')) {
-                    await setAlarms();
-                }
-                await updateAll();
-                break;
-            case "SNOOZE":
-                await browser.storage.sync.set({ snoozeUntil: Date.now() + message.duration });
+    const actions = {
+        "GET_DATA": async () => sendResponse({ settings: await getSettings(), suspendedTabs: await browser.tabs.query({ discarded: true }) }),
+        "SAVE_SETTING": async () => {
+            await browser.storage.sync.set(message.setting);
+            if (Object.keys(message.setting).some(k => ['extensionEnabled', 'inactiveThresholdMinutes', 'snoozeUntil'].includes(k))) {
                 await setAlarms();
-                await updateAll();
-                break;
-            case "CANCEL_SNOOZE":
-                await browser.storage.sync.set({ snoozeUntil: 0 });
-                await setAlarms();
-                await updateAll();
-                break;
-            case "SUSPEND_CURRENT_TAB":
-                const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
-                if (activeTab) await suspendTab(activeTab);
-                break;
-            case "SUSPEND_OTHER_TABS":
-                const [current] = await browser.tabs.query({ active: true, currentWindow: true });
-                if(current) {
-                    const others = await browser.tabs.query({ windowId: current.windowId, active: false });
-                    for (const t of others) await suspendTab(t);
-                }
-                break;
-            case "SUSPEND_ALL_WINDOWS":
-                const allTabs = await browser.tabs.query({ url: ["http://*/*", "https://*/*"] });
-                for (const t of allTabs) await suspendTab(t);
-                break;
-            case "WAKE_TAB":
-                await browser.tabs.reload(message.tabId);
-                const tabToActivate = await browser.tabs.get(message.tabId);
-                await browser.tabs.update(message.tabId, { active: true });
-                await browser.windows.update(tabToActivate.windowId, { focused: true });
-                break;
-            case "WAKE_ALL_TABS":
-                const suspended = await browser.tabs.query({ discarded: true });
-                for (const t of suspended) await browser.tabs.reload(t.id);
-                break;
-            case "CLOSE_ALL_TABS":
-                const suspendedIds = (await browser.tabs.query({ discarded: true })).map(t => t.id);
-                if(suspendedIds.length > 0) await browser.tabs.remove(suspendedIds);
-                break;
-            case "ADD_CURRENT_TAB_TO_EXCLUSION":
-                 const [tabToExclude] = await browser.tabs.query({ active: true, currentWindow: true });
-                 if (tabToExclude && tabToExclude.url && tabToExclude.url.startsWith('http')) {
-                     const domain = new URL(tabToExclude.url).hostname;
-                     let { exclusionList } = await browser.storage.sync.get({exclusionList: []});
-                     if (!exclusionList.includes(domain)) {
-                         exclusionList.push(domain);
-                         await browser.storage.sync.set({ 'exclusionList': exclusionList });
-                         await updateAll();
-                     }
-                 }
-                 break;
-            case "REMOVE_DOMAIN_FROM_EXCLUSION":
-                let { exclusionList } = await browser.storage.sync.get({exclusionList: []});
-                exclusionList = exclusionList.filter(d => d !== message.domain);
-                await browser.storage.sync.set({ 'exclusionList': exclusionList });
-                await updateAll();
-                break;
-            case "FORM_INPUT_DETECTED":
-                const formTabs = (await browser.storage.session.get(SESSION_KEYS.FORMS))[SESSION_KEYS.FORMS] || [];
-                if (!formTabs.includes(sender.tab.id)) {
-                    await browser.storage.session.set({ [SESSION_KEYS.FORMS]: [...formTabs, sender.tab.id] });
-                }
-                break;
+            }
+            if (Object.keys(message.setting).includes('smartGroups')) {
+                await updateContextMenus();
+            }
+            await updateAllUi();
+        },
+        "SUSPEND_CURRENT_TAB": async () => {
+            const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true });
+            if (activeTab) await suspendTab(activeTab, { force: true });
+        },
+        "SUSPEND_OTHER_TABS": async () => {
+            const [current] = await browser.tabs.query({ active: true, currentWindow: true });
+            if(current) {
+                const others = await browser.tabs.query({ windowId: current.windowId, active: false });
+                for (const t of others) await suspendTab(t, { force: true });
+            }
+        },
+        "WAKE_ALL_TABS": async () => {
+            const suspended = await browser.tabs.query({ discarded: true });
+            for(const t of suspended) await browser.tabs.reload(t.id);
+        },
+        "CLOSE_ALL_SUSPENDED_TABS": async () => {
+            const suspendedTabs = await browser.tabs.query({ discarded: true });
+            if (suspendedTabs.length > 0) {
+                const tabIds = suspendedTabs.map(t => t.id);
+                await browser.tabs.remove(tabIds);
+            }
+        },
+        "WAKE_TAB": async () => {
+            await browser.tabs.reload(message.tabId);
+            const tabToActivate = await browser.tabs.get(message.tabId);
+            await browser.tabs.update(message.tabId, { active: true });
+            await browser.windows.update(tabToActivate.windowId, { focused: true });
+        },
+        "SMART_GROUP_ACTION": () => handleSmartGroupAction(message.action, message.payload).then(updateAllUi),
+        "OPEN_SMART_GROUP": () => openSmartGroup(message.groupId),
+        "EXCLUSION_ACTION": () => handleExclusion(message.action, message.domain).then(updateAllUi),
+        "FORM_INPUT_DETECTED": async () => {
+            const formTabs = (await browser.storage.session.get(SESSION_KEYS.FORMS))[SESSION_KEYS.FORMS] || [];
+            if (sender.tab && !formTabs.includes(sender.tab.id)) {
+                await browser.storage.session.set({ [SESSION_KEYS.FORMS]: [...formTabs, sender.tab.id] });
+            }
         }
-    })();
-    return true;
+    };
+    if (actions[message.type]) {
+        actions[message.type]();
+        return true;
+    }
 });

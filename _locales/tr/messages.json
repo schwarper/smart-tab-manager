@@ -1,63 +1,252 @@
 {
-  "extName": { "message": "Akıllı Sekme Yöneticisi" },
-  "extDescription": { "message": "Otomatik sekme uyutma, gruplama ve daha fazlası." },
-  "toggleButtonLoading": { "message": "Yükleniyor..." },
-  "toggleButtonActive": { "message": "ETKİN" },
-  "toggleButtonInactive": { "message": "DEVRE DIŞI" },
-  "toggleButtonSnoozed": { "message": "MOLADA ($minutes$ dk)", "placeholders": { "minutes": { "content": "$1" } } },
-  "snoozeFor15Minutes": { "message": "15 Dakika Mola" },
-  "snoozeFor30Minutes": { "message": "30 Dakika Mola" },
-  "snoozeFor1Hour": { "message": "1 Saat Mola" },
-  "snoozeFor3Hours": { "message": "3 Saat Mola" },
-  "snoozeStartButton": { "message": "Başlat" },
-  "cancelSnoozeButton": { "message": "Molayı İptal Et" },
-  "quickActionsHeader": { "message": "Hızlı İşlemler" },
-  "suspendCurrentTabBtn": { "message": "Bu Sekmeyi Uyut" },
-  "suspendOtherTabsBtn": { "message": "Diğerlerini Uyut" },
-  "suspendAllWindowsBtn": { "message": "TÜM Pencereleri Uyut" },
-  "suspendedTabsHeader": { "message": "Askıdaki Sekmeler" },
-  "noSuspendedTabs": { "message": "Askıda sekme yok." },
-  "wakeAllBtn": { "message": "Tümünü Uyandır" },
-  "closeAllBtn": { "message": "Tümünü Kapat" },
-  "exclusionListHeader": { "message": "Dışlama Listesi" },
-  "addCurrentSiteToExclusionBtn": { "message": "Mevcut Siteyi Listeye Ekle" },
-  "noExcludedSites": { "message": "Dışlanan site yok." },
-  "settingsHeader": { "message": "Ayarlar" },
-  "suspendThresholdLabel": { "message": "Askıya Alma Eşiği (dk)" },
-  "suspendThresholdTitle": { "message": "Bir sekmenin ne kadar süre işlem yapılmadığında askıya alınacağını belirler." },
-  "tabTitlePrefixLabel": { "message": "Sekme Başlığı Öneki" },
-  "tabTitlePrefixTitle": { "message": "Askıya alınan sekmelerin başlığına eklenecek metin." },
-  "ignorePinnedLabel": { "message": "Sabitlenmiş sekmeleri yoksay" },
-  "ignorePinnedTitle": { "message": "Sabitlenmiş sekmeler otomatik olarak askıya alınmaz." },
-  "ignoreAudioLabel": { "message": "Ses çalanları yoksay" },
-  "ignoreAudioTitle": { "message": "Arka planda ses çalan sekmeler askıya alınmaz." },
-  "ignoreFormsLabel": { "message": "Form doldurulanları yoksay" },
-  "ignoreFormsTitle": { "message": "İçinde yazı yazılmış formlar bulunan sekmeler askıya alınmaz." },
-  "groupTabsAutomaticallyLabel": { "message": "Sekmeleri Otomatik Grupla" },
-  "groupTabsAutomaticallyTitle": { "message": "Askıya alınan sekmeleri otomatik olarak bir grupta toplar." },
-  "groupNameLabel": { "message": "Grup Adı" },
-  "groupColorLabel": { "message": "Grup Rengi" },
-  "showManualNotificationsLabel": { "message": "Manuel askıya almada bildirim göster" },
-  "showManualNotificationsTitle": { "message": "Tek bir sekme manuel olarak askıya alındığında bildirim gösterir." },
-  "showAutoNotificationsLabel": { "message": "Otomatik askıya almada bildirim göster" },
-  "showAutoNotificationsTitle": { "message": "Sekmeler otomatik olarak askıya alındığında toplu bir bildirim gösterir." },
-  "wakeTabAction": { "message": "Bu sekmeyi uyandır" },
-  "removeExclusionAction": { "message": "$domain$ sitesini dışlama listesinden kaldır", "placeholders": { "domain": { "content": "$1" } } },
-  "confirmAction": { "message": "Bu işlem geri alınamaz. Emin misiniz?" },
-  "contextMenuSuspendThisTab": { "message": "Bu sekmeyi askıya al" },
-  "contextMenuSuspendOtherTabs": { "message": "Diğer sekmeleri askıya al" },
-  "contextMenuExcludeSite": { "message": "Bu siteyi asla askıya alma" },
-  "contextMenuUnexcludeSite": { "message": "Bu siteyi askıya alma listesinden kaldır" },
-  "notificationTitleTabSuspended": { "message": "Sekme Uyutuldu" },
-  "notificationMessageTabSuspended": { "message": "\"$title$\" adlı sekme uyutuldu.", "placeholders": { "title": { "content": "$1" } } },
-  "notificationTitleAutoSuspend": { "message": "Otomatik Askıya Alma" },
-  "notificationMessageAutoSuspend": { "message": "$count$ sekme askıya alındı: $titles$", "placeholders": { "count": { "content": "$1" }, "titles": { "content": "$2" } } },
-  "colorGrey": { "message": "Gri" },
-  "colorBlue": { "message": "Mavi" },
-  "colorRed": { "message": "Kırmızı" },
-  "colorYellow": { "message": "Sarı" },
-  "colorGreen": { "message": "Yeşil" },
-  "colorPink": { "message": "Pembe" },
-  "colorPurple": { "message": "Mor" },
-  "colorCyan": { "message": "Turkuaz" }
+  "extName": {
+    "message": "Akıllı Sekme Yöneticisi"
+  },
+  "extDescription": {
+    "message": "Sekme karmaşasını azaltmak ve performansı artırmak için otomatik sekme askıya alma, akıllı gruplama ve kapsamlı özelleştirme özellikleri sunan akıllı bir sekme yöneticisi."
+  },
+  "toggleButtonLoading": {
+    "message": "Yükleniyor..."
+  },
+  "toggleButtonActive": {
+    "message": "Aktif"
+  },
+  "toggleButtonInactive": {
+    "message": "Devre Dışı"
+  },
+  "toggleButtonSnoozed": {
+    "message": "Ertelendi (~$MINUTES$ dk. kaldı)",
+    "placeholders": {
+      "MINUTES": {
+        "content": "$1"
+      }
+    }
+  },
+  "snoozeFor10Minutes": {
+    "message": "10 Dakika"
+  },
+  "snoozeFor30Minutes": {
+    "message": "30 Dakika"
+  },
+  "snoozeFor1Hour": {
+    "message": "1 Saat"
+  },
+  "snoozeFor2Hours": {
+    "message": "2 Saat"
+  },
+  "snoozeFor5Hours": {
+    "message": "5 Saat"
+  },
+  "snoozeFor12Hours": {
+    "message": "12 Saat"
+  },
+  "snoozeFor24Hours": {
+    "message": "24 Saat"
+  },
+  "snoozeStartButton": {
+    "message": "Ertele"
+  },
+  "cancelSnoozeButton": {
+    "message": "Ertelemeyi İptal Et"
+  },
+  "quickActionsHeader": {
+    "message": "Hızlı Eylemler"
+  },
+  "suspendCurrentTabBtn": {
+    "message": "Bu Sekmeyi Askıya Al"
+  },
+  "suspendOtherTabsBtn": {
+    "message": "Diğer Sekmeleri Askıya Al"
+  },
+  "suspendedTabsHeader": {
+    "message": "Askıya Alınan Sekmeler"
+  },
+  "noSuspendedTabs": {
+    "message": "Şu anda askıya alınmış sekme yok."
+  },
+  "wakeAllBtn": {
+    "message": "Tüm Sekmeleri Uyandır"
+  },
+  "closeAllSuspendedBtn": {
+    "message": "Tüm Askıdakileri Kapat"
+  },
+  "wakeTabAction": {
+    "message": "Bu sekmeyi uyandır"
+  },
+  "smartGroupsHeader": {
+    "message": "Akıllı Gruplar"
+  },
+  "noSmartGroups": {
+    "message": "Henüz akıllı grup oluşturulmadı."
+  },
+  "createGroupBtn": {
+    "message": "Yeni Grup Oluştur"
+  },
+  "openSmartGroupTitle": {
+    "message": "Bu gruptaki tüm sekmeleri aç"
+  },
+  "editSmartGroupTitle": {
+    "message": "Bu grubu düzenle"
+  },
+  "deleteSmartGroupTitle": {
+    "message": "Bu grubu sil"
+  },
+  "dialogCreateGroupTitle": {
+    "message": "Yeni Grup Oluştur"
+  },
+  "dialogEditGroupTitle": {
+    "message": "Grubu Düzenle"
+  },
+  "dialogGroupNameLabel": {
+    "message": "Grup Adı"
+  },
+  "dialogGroupColorLabel": {
+    "message": "Grup Rengi"
+  },
+  "dialogDomainsLabel": {
+    "message": "Bu gruptaki web siteleri"
+  },
+  "dialogAddDomainPlaceholder": {
+    "message": "ör., github.com"
+  },
+  "dialogSaveBtn": {
+    "message": "Kaydet"
+  },
+  "dialogCancelBtn": {
+    "message": "İptal"
+  },
+  "settingsHeader": {
+    "message": "Ayarlar"
+  },
+  "suspendThresholdLabel": {
+    "message": "Sekmeleri şu süreden sonra askıya al"
+  },
+  "suspendThresholdTitle": {
+    "message": "Bir sekmenin otomatik olarak askıya alınacağı boşta kalma süresini dakika olarak ayarlayın."
+  },
+  "tabTitlePrefixLabel": {
+    "message": "Askıya alınan sekme başlığı ön eki"
+  },
+  "tabTitlePrefixTitle": {
+    "message": "Askıya alınmış bir sekmenin başlığının başına eklenecek bir simge veya metin."
+  },
+  "ignorePinnedLabel": {
+    "message": "Sabitlenmiş sekmeleri asla askıya alma"
+  },
+  "ignorePinnedTitle": {
+    "message": "İşaretlenirse, sabitlenmiş sekmeler otomatik olarak askıya alınmaz."
+  },
+  "ignoreAudioLabel": {
+    "message": "Ses çalan sekmeleri yoksay"
+  },
+  "ignoreAudioTitle": {
+    "message": "İşaretlenirse, ses çıkaran sekmeler otomatik olarak askıya alınmaz. Manuel askıya alma yine de çalışır."
+  },
+  "ignoreFormsLabel": {
+    "message": "Form girişi olan sekmeleri yoksay"
+  },
+  "ignoreFormsTitle": {
+    "message": "İşaretlenirse, yazmaya başladığınız sekmeler otomatik olarak askıya alınmaz. Manuel askıya alma yine de çalışır."
+  },
+  "autoGroupNewTabsLabel": {
+    "message": "Sekmeleri Akıllı Gruplara otomatik grupla"
+  },
+  "autoGroupNewTabsTitle": {
+    "message": "Yeni açılan sekmeleri, eğer varsa, ilgili Akıllı Gruplarına otomatik olarak taşıyın."
+  },
+  "themeLabel": {
+    "message": "Tema"
+  },
+  "themeTitle": {
+    "message": "Açılır pencerenin görünümünü ve hissini seçin."
+  },
+  "themeSystem": {
+    "message": "Sistem Varsayılanı"
+  },
+  "themeLight": {
+    "message": "Açık"
+  },
+  "themeDark": {
+    "message": "Koyu"
+  },
+  "themeOceanic": {
+    "message": "Okyanus"
+  },
+  "themeForest": {
+    "message": "Orman"
+  },
+  "themeRose": {
+    "message": "Rosé Pine"
+  },
+  "themeSlate": {
+    "message": "Arduvaz"
+  },
+  "themeMonokai": {
+    "message": "Monokai"
+  },
+  "themeCrimson": {
+    "message": "Kızıl"
+  },
+  "exclusionListHeader": {
+    "message": "İstisna Listesi"
+  },
+  "addCurrentSiteToExclusionBtn": {
+    "message": "Mevcut Siteyi Askıya Almadan Hariç Tut"
+  },
+  "noExcludedSites": {
+    "message": "Şu anda hariç tutulan site yok."
+  },
+  "removeExclusionAction": {
+    "message": "$DOMAIN$ sitesini istisna listesinden kaldır",
+    "placeholders": {
+      "DOMAIN": {
+        "content": "$1"
+      }
+    }
+  },
+  "contextMenuSuspendThisTab": {
+    "message": "Bu Sekmeyi Askıya Al"
+  },
+  "contextMenuSuspendOtherTabs": {
+    "message": "Diğer Sekmeleri Askıya Al"
+  },
+  "contextMenuExcludeSite": {
+    "message": "Bu siteyi asla askıya alma"
+  },
+  "contextMenuUnexcludeSite": {
+    "message": "Bu sitenin askıya alınmasına izin ver"
+  },
+  "contextMenuToggleExclusion": {
+    "message": "Bu siteyi asla askıya alma"
+  },
+  "contextMenuAddToSmartGroup": {
+    "message": "Siteyi Akıllı Gruba Ekle"
+  },
+  "confirmAction": {
+    "message": "Emin misiniz?"
+  },
+  "colorGrey": {
+    "message": "Gri"
+  },
+  "colorBlue": {
+    "message": "Mavi"
+  },
+  "colorRed": {
+    "message": "Kırmızı"
+  },
+  "colorYellow": {
+    "message": "Sarı"
+  },
+  "colorGreen": {
+    "message": "Yeşil"
+  },
+  "colorPink": {
+    "message": "Pembe"
+  },
+  "colorPurple": {
+    "message": "Mor"
+  },
+  "colorCyan": {
+    "message": "Camgöbeği"
+  }
 }

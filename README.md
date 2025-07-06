@@ -1,31 +1,49 @@
 # Smart Tab Manager
 
-A lightweight, intelligent Chrome extension to automatically suspend inactive tabs, freeing up memory and CPU resources. Manage dozens of tabs effortlessly without slowing down your browser.
+An intelligent tab manager to suspend, group, and organize your tabs efficiently. Reduce clutter, save memory, and boost your browser's performance.
 
 ---
 
 ## Why Smart Tab Manager?
 
-In a typical Browse session, it's easy to accumulate dozens of open tabs. Each tab consumes system resources, leading to a slower computer and a drained battery. Smart Tab Suspender solves this by gracefully "parking" tabs you haven't used in a while. When you return to a suspended tab, it reloads instantly to its previous state.
+In a typical Browse session, it's easy to accumulate dozens of open tabs. Each tab consumes system resources, leading to a slower computer and a drained battery. **Smart Tab Manager** solves this by gracefully "parking" tabs you haven't used in a while. When you return to a suspended tab, it reloads instantly to its previous state.
 
-## ✨ Features
+This extension not only helps you save memory but also allows you to keep your tabs more organized than ever with its **Smart Groups** feature.
 
-* **Automatic Suspension:** Automatically suspends tabs after a user-defined period of inactivity (default is 15 minutes).
-* **Manual Control:** Instantly suspend the current tab, other tabs in the window, or all tabs across all windows with a single click.
-* 🧠 **Intelligent Whitelisting:**
-    * Never suspends **pinned tabs**.
-    * Never suspends tabs that are **playing audio**.
-    * Never suspends tabs where you are **actively filling out a form**.
-    * Create a custom **exclusion list** for sites you never want to suspend.
-* 🚀 **Memory & CPU Saver:** Uses Chrome's native `tabs.discard` API, which is the most efficient way to unload tabs without losing their place.
-* **Tab Groups:** Automatically organizes suspended tabs into a neat group for better management.
-* **Snooze Functionality:** Temporarily disable suspension for a set period when you need all tabs active.
-* ⚙️ **Highly Customizable:**
-    * Adjust the inactivity timer.
-    * Set a custom prefix (like 😴) for suspended tab titles.
-    * Enable or disable notifications.
-    * Configure automatic tab grouping options.
-* **Visual Feedback:** A badge on the extension icon shows the current number of suspended tabs.
+## ✨ Core Features
+
+Our extension is packed with powerful features to make your Browse experience more efficient and personal:
+
+### 🧠 Smart Organization
+
+* **Smart Groups:** Create thematic groups like `Work`, `Social`, or `Research` with your favorite websites.
+* **One-Click Opening:** Open an entire group of websites with a single click, getting your workflow ready instantly.
+* **Auto-Grouping:** Have newly opened tabs automatically sorted into their designated Smart Group.
+* **Add from Context Menu:** Add any site directly to a Smart Group from the right-click menu, without even opening the popup.
+
+### 🚀 Performance & Memory Savings
+
+* **Automatic Suspension:** Automatically suspends inactive tabs after a user-defined period (default is 15 minutes).
+* **Manual Control:** Instantly suspend the current tab or all other tabs in the window with a single click.
+* **Efficient Technology:** Uses Chrome's native `tabs.discard` API to save memory in the most efficient way possible, without losing your tabs.
+
+### 🎨 Personalization & Themes
+
+* **Theme Support:** Choose from multiple built-in themes, including System Default, Light, Dark, Oceanic, Forest, and more.
+* **Customizable Settings:** Adjust the inactivity timer and set a custom prefix (like 😴) for the titles of suspended tabs.
+
+### 🛡️ Intelligent Safeguards
+
+* **Pinned Tabs:** Pinned tabs are never automatically suspended.
+* **Tabs Playing Audio:** Tabs that are playing audio will not be disturbed.
+* **Form Inputs:** Tabs where you are actively filling out a form are safe.
+* **Exclusion List:** Create a custom list of sites you never want to be suspended.
+* **Snooze:** Temporarily disable the suspension functionality when you need all your tabs active.
+
+## 📸 Gallery
+![image](https://github.com/user-attachments/assets/2cd69483-8452-4719-91a6-c191e0d3d1a1)
+![image](https://github.com/user-attachments/assets/b7f6dc64-2647-4b06-857f-5c73eb89af59)
+![image](https://github.com/user-attachments/assets/b729cdc1-0f01-406c-856b-a8dc884f05fe)
 
 ## 🚀 Installation
 
@@ -46,7 +64,7 @@ In a typical Browse session, it's easy to accumulate dozens of open tabs. Each t
 ## 🛠️ Usage
 
 * **Main Popup:** Click the extension icon in your Chrome toolbar to open the main control panel. From here, you can access all quick actions, see the list of suspended tabs, manage your exclusion list, and change settings.
-* **Right-Click Menu:** Right-click on any webpage to quickly suspend the current tab, other tabs, or add the site to your exclusion list.
+* **Right-Click Menu:** Right-click on any webpage to quickly suspend the current tab or other tabs, add the site to the exclusion list, or add it to a Smart Group.
 
 ## ❤️ Support & Contribution
 

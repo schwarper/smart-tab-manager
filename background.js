@@ -212,7 +212,6 @@ browser.runtime.onStartup.addListener(async () => {
 browser.alarms.onAlarm.addListener(alarm => { if (alarm.name === ALARMS.CHECK_INACTIVE) checkInactiveTabs(); });
 browser.tabs.onUpdated.addListener(handleTabUpdateForAutoGrouping);
 browser.tabs.onUpdated.addListener((tabId, changeInfo) => { if (changeInfo.discarded === false) handleTabAwakening(tabId); });
-browser.tabs.onActivated.addListener(activeInfo => handleTabAwakening(activeInfo.tabId));
 [browser.tabs.onRemoved, browser.tabGroups.onUpdated, browser.tabGroups.onRemoved].forEach(event => event.addListener(updateAllUi));
 
 browser.contextMenus.onClicked.addListener(async (info, tab) => {

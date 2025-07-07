@@ -3,7 +3,7 @@
     "message": "Akıllı Sekme Yöneticisi"
   },
   "extDescription": {
-    "message": "Sekme karmaşasını azaltmak ve performansı artırmak için otomatik sekme askıya alma, akıllı gruplama ve kapsamlı özelleştirme özellikleri sunan akıllı bir sekme yöneticisi."
+    "message": "Otomatik sekme askıya alma, akıllı gruplama ve kapsamlı özelleştirme özellikleri sunan akıllı bir sekme yöneticisi."
   },
   "toggleButtonLoading": {
     "message": "Yükleniyor..."

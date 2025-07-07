@@ -1,6 +1,6 @@
 {
   "extName": { "message": "Smart Tab Manager" },
-  "extDescription": { "message": "An intelligent tab manager that offers automatic tab suspension, smart grouping, and comprehensive customization to reduce clutter and boost performance." },
+  "extDescription": { "message": "Automatic tab suspension, smart grouping, and comprehensive customization to reduce clutter and boost performance." },
   "toggleButtonLoading": { "message": "Loading..." },
   "toggleButtonActive": { "message": "Active" },
   "toggleButtonInactive": { "message": "Inactive" },

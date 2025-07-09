@@ -9,7 +9,7 @@
     "default_popup": "popup.html",
     "default_icon": { "48": "icons/icon48.png" }
   },
-  "permissions": ["storage", "alarms", "tabs", "tabGroups", "notifications", "contextMenus", "scripting"],
+  "permissions": ["storage", "alarms", "tabs", "tabGroups", "contextMenus", "scripting"],
   "background": { "service_worker": "background.js" },
   "host_permissions": [ "<all_urls>" ],
   "content_scripts": [{
